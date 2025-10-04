@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Card, Table } from "react-bootstrap";
 import Breadcrumb from "../../components/Layouts/Breadcrumb";
 import { UserContext } from "../../contexts/UserContext";
-import { useApiData } from '../../contexts/ApiDataContext';
+import { useApiData } from "../../contexts/ApiDataContext";
 
 const HomePages = () => {
   const { user } = useContext(UserContext);
@@ -10,51 +10,15 @@ const HomePages = () => {
 
   const [agentBalance, setAgentBalance] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
-  const [expired, setExpired] = useState(null);
   const [isMt, setIsMt] = useState(null);
 
   useEffect(() => {
     if (data) {
       setAgentBalance(data.total_balance_agent || 0);
       setUserBalance(data.total_balance_user || 0);
-      setExpired(data.exp || null);
       setIsMt(data.is_maintenance || null);
     }
   }, [data]);
-
-  const expDate = new Date(expired || user?.exp);
-  const today = new Date();
-  const isExpired = today.getTime() >= expDate.getTime();
-
-
-  const timeDiff = expDate.getTime() - today.getTime();
-
-  const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-  let textColor = "black";
-  let displayText = formatDate(expDate);
-
-  if (today.getTime() >= expDate.getTime()) {
-    displayText = "EXPIRED";
-    textColor = "#bdc3c7";
-  } else if (daysDiff <= 3) {
-    textColor = "#f39c12";
-  }
-
-
-  function formatDate(date) {
-    return date
-      .toLocaleString("en-GB", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      })
-      .replace(",", "");
-  }
 
   const formatBalance = (amount) =>
     new Intl.NumberFormat("en-US", {
@@ -128,6 +92,7 @@ const HomePages = () => {
                 </tbody>
               </Table>
             </div>
+
             <div className="col-md-6">
               <Table
                 bordered
@@ -146,25 +111,30 @@ const HomePages = () => {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="py-2" style={{ width: "35%", textAlign: "left", paddingLeft: "8px" }}>
-                      <span>Expired Date</span>
-                    </td>
-                    <td className="py-2 text-end fw-semibold" style={{ paddingRight: "8px" }}>
-                      <span style={{ color: textColor }}>{displayText}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-2" style={{ width: "35%", textAlign: "left", paddingLeft: "8px" }}>
+                    <td
+                      className="py-2"
+                      style={{
+                        width: "35%",
+                        textAlign: "left",
+                        paddingLeft: "8px",
+                      }}
+                    >
                       <span>Status Website</span>
                     </td>
-                    <td className="py-2 text-end fw-semibold" style={{ paddingRight: "8px" }}>
-                      <span className={isExpired ? 'text-secondary' : isMt ? 'text-danger' : 'text-success'}>
-                        {isExpired ? 'SUSPENDED' : isMt ? 'INACTIVE' : 'RUNNING'}
+                    <td
+                      className="py-2 text-end fw-semibold"
+                      style={{ paddingRight: "8px" }}
+                    >
+                      <span
+                        className={
+                          isMt ? "text-danger" : "text-success"
+                        }
+                      >
+                        {isMt ? "INACTIVE" : "RUNNING"}
                       </span>
                     </td>
                   </tr>
                 </tbody>
-
               </Table>
             </div>
           </div>
