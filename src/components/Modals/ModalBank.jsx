@@ -14,6 +14,9 @@ const ModalBank = ({
   handleSubmit,
   errors,
   actions,
+  otpIsValid,
+  setErrors,
+  setOtpIsValid
 }) => {
   const formatNumberWithComma = (value) => {
     if (!value) return "";
@@ -175,6 +178,38 @@ const ModalBank = ({
                 />
               </Col>
             </Row>
+            <Form.Label>
+              OTP <span className="text-danger">*</span>
+            </Form.Label>
+
+            <Form.Control
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="OTP"
+              value={bankData.OTP || ""}
+              isInvalid={!!errors.OTP || otpIsValid}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                handleChange("OTP", value);
+
+                if (errors.OTP) {
+                  setErrors((prev) => {
+                    const n = { ...prev };
+                    delete n.OTP;
+                    return n;
+                  });
+                }
+
+                if (otpIsValid) {
+                  setOtpIsValid(false);
+                }
+              }}
+              className="mb-3"
+            />
+
+
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" className="rounded-1" onClick={onHide}>

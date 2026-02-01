@@ -16,6 +16,7 @@ const IndexBankManagement = () => {
   const [errors, setErrors] = useState({});
   const [loadingBtn, setLoadingBtn] = useState(false);
   const [showModalDelete, setShowModalDelete] = useState(false);
+  const [otpIsValid, setOtpIsValid] = useState("");
 
   const [bankData, setBankData] = useState({
     category: "",
@@ -26,6 +27,7 @@ const IndexBankManagement = () => {
     minTransaction: "",
     maxTransaction: "",
     uniqueCode: "",
+    OTP: "",
   });
 
   const {
@@ -82,6 +84,10 @@ const IndexBankManagement = () => {
 
     if (!bankData.category) {
       newErrors.category = "Category is required";
+    }
+
+    if (!bankData.OTP) {
+      newErrors.OTP = "OTP is required";
     }
 
     if (!bankData.bankName) {
@@ -181,6 +187,7 @@ const IndexBankManagement = () => {
         minTransaction: bankToEdit.min_deposit || "",
         maxTransaction: bankToEdit.max_deposit || "",
         uniqueCode: bankToEdit.unique_code || "",
+        OTP: "",
       });
     }
 
@@ -199,6 +206,7 @@ const IndexBankManagement = () => {
       minTransaction: "",
       maxTransaction: "",
       uniqueCode: "",
+      OTP: "",
     });
     setShowModal(false);
     setModalTitle("");
@@ -221,13 +229,14 @@ const IndexBankManagement = () => {
           minTransaction: parseFloat(bankData.minTransaction.replace(/,/g, "")),
           maxTransaction: parseFloat(bankData.maxTransaction.replace(/,/g, "")),
           uniqueCode: bankData.uniqueCode,
+          OTP: bankData.OTP,
         });
         if (response.data.success) {
           setShowModal(false);
           setListData((prevListData) => [...prevListData, response.data.data]);
         }
       } catch (error) {
-        console.log(error);
+        setOtpIsValid(error.response.data.message);
       } finally {
         setLoadingBtn(false);
       }
@@ -415,22 +424,19 @@ const IndexBankManagement = () => {
                 handleStatusChange(data.id, e.target.value, "status_bank")
               }
               className={`form-control form-control-sm has-arrow 
-                                                ${
-                                                  data.status_bank === "active"
-                                                    ? "select-active"
-                                                    : ""
-                                                }
-                                                ${
-                                                  data.status_bank ===
-                                                  "maintenance"
-                                                    ? "select-maintenance"
-                                                    : ""
-                                                }
-                                                ${
-                                                  data.status_bank === "offline"
-                                                    ? "select-offline"
-                                                    : ""
-                                                }`}
+                                                ${data.status_bank === "active"
+                  ? "select-active"
+                  : ""
+                }
+                                                ${data.status_bank ===
+                  "maintenance"
+                  ? "select-maintenance"
+                  : ""
+                }
+                                                ${data.status_bank === "offline"
+                  ? "select-offline"
+                  : ""
+                }`}
             >
               <option value="active">Active</option>
               <option value="maintenance">Maintenance</option>
@@ -488,6 +494,9 @@ const IndexBankManagement = () => {
 
   const handleConfirmUpdateBanks = async (e) => {
     e.preventDefault();
+
+    if (!handleValidation()) return;
+
     setLoadingBtn(true);
     try {
       const response = await AxiosInstance.put(
@@ -506,6 +515,7 @@ const IndexBankManagement = () => {
             bank.id === updatedBankData.id ? updatedBankData : bank
           );
         });
+
         setBankData({
           category: "",
           bankName: "",
@@ -515,6 +525,7 @@ const IndexBankManagement = () => {
           minTransaction: "",
           maxTransaction: "",
           uniqueCode: "",
+          OTP: "",
         });
 
         setShowModal(false);
@@ -523,6 +534,7 @@ const IndexBankManagement = () => {
         setLoadingBtn(false);
       }
     } catch (error) {
+      setOtpIsValid(error.response.data.message);
       setLoadingBtn(false);
     }
   };
@@ -570,6 +582,9 @@ const IndexBankManagement = () => {
         errors={errors}
         loadingBtn={loadingBtn}
         actions={actions}
+        otpIsValid={otpIsValid}
+        setErrors={setErrors}
+        setOtpIsValid={setOtpIsValid}
       />
       <ModalConfirm
         textInfo={{

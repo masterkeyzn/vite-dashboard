@@ -17,7 +17,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("https://server-idr.ug888.xyz/api/login", {
+      const response = await axios.post("https://api.ug888.xyz/api/login", {
         username,
         password,
       });
