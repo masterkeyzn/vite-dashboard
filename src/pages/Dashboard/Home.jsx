@@ -11,12 +11,14 @@ const HomePages = () => {
   const [agentBalance, setAgentBalance] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
   const [isMt, setIsMt] = useState(null);
+  const [Expiry, setExpiry] = useState(null);
 
   useEffect(() => {
     if (data) {
       setAgentBalance(data.total_balance_agent || 0);
       setUserBalance(data.total_balance_user || 0);
       setIsMt(data.is_maintenance || null);
+      setExpiry(data.expired || null);
     }
   }, [data]);
 
@@ -25,6 +27,45 @@ const HomePages = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+
+  const formatDateTime = (isoDate) => {
+    const date = new Date(isoDate);
+
+    const datePart = date.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta",
+    });
+
+    return `${datePart}`;
+  };
+
+  const getExpiryInfo = (expiryIso) => {
+    if (!expiryIso) {
+      return { text: "-", className: "text-dark" };
+    }
+
+    const now = new Date();
+    const expiryDate = new Date(expiryIso);
+
+    const diffMs = expiryDate - now;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    const formattedDate = formatDateTime(expiryIso);
+
+    if (diffMs < 0) {
+      return { text: "EXPIRED", className: "text-danger" };
+    }
+
+    if (diffDays <= 3) {
+      return { text: formattedDate, className: "text-warning" };
+    }
+
+    return { text: formattedDate, className: "text-dark" };
+  };
+
+  const expiryInfo = getExpiryInfo(Expiry);
 
   return (
     <>
@@ -134,6 +175,28 @@ const HomePages = () => {
                       </span>
                     </td>
                   </tr>
+                  <tr>
+                    <td
+                      className="py-2"
+                      style={{
+                        width: "35%",
+                        textAlign: "left",
+                        paddingLeft: "8px",
+                      }}
+                    >
+                      <span>Expiry Date</span>
+                    </td>
+
+                    <td
+                      className="py-2 text-end fw-semibold"
+                      style={{ paddingRight: "8px" }}
+                    >
+                      <span className={expiryInfo.className}>
+                        {expiryInfo.text}
+                      </span>
+                    </td>
+                  </tr>
+
                 </tbody>
               </Table>
             </div>
