@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useDataTable from "../../components/Tables/useDataTable";
 import GenericTable from "../../components/Tables/GenericTable";
-import { OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Button, Card, Form, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import ModalBank from "../../components/Modals/ModalBank";
 import AxiosInstance from "../../components/Api/AxiosInstance";
 import ModalConfirm from "../../components/Modals/ModalConfirm";
 import { toast } from "react-toastify";
+import { MdOutlineSave } from "react-icons/md";
 
 const IndexBankManagement = () => {
   const endPoint = "/bank-deposit";
@@ -17,6 +18,66 @@ const IndexBankManagement = () => {
   const [loadingBtn, setLoadingBtn] = useState(false);
   const [showModalDelete, setShowModalDelete] = useState(false);
   const [otpIsValid, setOtpIsValid] = useState("");
+  const [loadingPGA, setLoadingPGA] = useState(false);
+  const [PaymentGatewayData, setPaymentGatewayData] = useState(null);
+  const [EditPaymentGatewayData, setEditPaymentGatewayData] = useState({
+    uuid: PaymentGatewayData?.uuid || '',
+    logo: PaymentGatewayData?.logo || '',
+    api_url: PaymentGatewayData?.api_url || '',
+    status: PaymentGatewayData?.status ? 'active' : 'offline',
+    otp: ''
+  });
+
+  const getPaymentGatewayData = async () => {
+    try {
+      const response = await AxiosInstance.get("/payment-gateway");
+      setPaymentGatewayData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching payment gateway data:", error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setEditPaymentGatewayData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSavePGA = async () => {
+    try {
+      setLoadingPGA(true);
+
+      const dataToUpdate = {
+        uuid: EditPaymentGatewayData.uuid,
+        logo: EditPaymentGatewayData.logo,
+        api_url: EditPaymentGatewayData.api_url,
+        status: EditPaymentGatewayData.status === 'active',
+        otp: EditPaymentGatewayData.otp
+      };
+
+      const response = await AxiosInstance.put('/payment-gateway', dataToUpdate);
+
+      if (!response.data.success) {
+        throw new Error('Gagal mengupdate payment gateway');
+      }
+
+      const updatedData = response.data.data;
+
+      setPaymentGatewayData({
+        ...PaymentGatewayData,
+        ...updatedData
+      });
+
+      toast.success('Payment Gateway berhasil diupdate');
+
+    } catch (error) {
+      toast.error('Gagal mengupdate payment gateway: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoadingPGA(false);
+    }
+  };
+
 
   const [bankData, setBankData] = useState({
     category: "",
@@ -242,6 +303,22 @@ const IndexBankManagement = () => {
       }
     }
   };
+
+  useEffect(() => {
+    getPaymentGatewayData();
+  }, []);
+
+  useEffect(() => {
+    if (PaymentGatewayData && typeof PaymentGatewayData === 'object') {
+      setEditPaymentGatewayData({
+        uuid: PaymentGatewayData.uuid || '',
+        logo: PaymentGatewayData.logo || '',
+        api_url: PaymentGatewayData.api_url || '',
+        status: PaymentGatewayData.status ? 'active' : 'offline',
+        otp: EditPaymentGatewayData.otp || ''
+      });
+    }
+  }, [PaymentGatewayData]);
 
   const customButton = (
     <button
@@ -565,6 +642,111 @@ const IndexBankManagement = () => {
         pageIndex={pageIndex}
         customButton={customButton}
       />
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3">
+        <h4 className="fw-semibold mb-2 mb-md-0">Payment Gateway</h4>
+      </div>
+      <Card className="rounded-0 shadow-sm">
+        <Card.Body>
+          <Table
+            responsive
+            hover
+            size="sm"
+            style={{ width: "100%" }}
+            className="text-nowrap align-middle"
+          >
+            <thead>
+              <tr>
+                <th style={{ width: "20%" }}>UUID</th>
+                <th style={{ width: "20%" }}>Logo</th>
+                <th style={{ width: "20%" }}>Endpoint</th>
+                <th style={{ width: "120px" }}>Status</th>
+                <th style={{ width: "70px" }}>OTP</th>
+                <th style={{ width: "60px" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {PaymentGatewayData ? (
+                <tr>
+                  <td>
+                    <Form.Control
+                      size="sm"
+                      value={EditPaymentGatewayData.uuid}
+                      onChange={(e) => handleInputChange('uuid', e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <Form.Control
+                      style={{ minWidth: "100px" }}
+                      size="sm"
+                      value={EditPaymentGatewayData.logo}
+                      onChange={(e) => handleInputChange('logo', e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <Form.Control
+                      style={{ minWidth: "100px" }}
+                      size="sm"
+                      value={EditPaymentGatewayData.api_url}
+                      onChange={(e) => handleInputChange('api_url', e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <select
+                      name="status"
+                      style={{ minWidth: "100px" }}
+                      className={`form-control form-control-sm has-arrow ${EditPaymentGatewayData.status === "active" ? "select-active" : "select-offline"
+                        }`}
+                      value={EditPaymentGatewayData.status}
+                      onChange={(e) => handleInputChange('status', e.target.value)}
+                    >
+                      <option value="active">Active</option>
+                      <option value="offline">Offline</option>
+                    </select>
+                  </td>
+                  <td>
+                    <Form.Control
+                      style={{ minWidth: "100px" }}
+                      size="sm"
+                      type="text"
+                      value={EditPaymentGatewayData.otp}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        handleInputChange('otp', value);
+                      }}
+                      required
+                      minLength={6}
+                      maxLength={6}
+                      pattern="\d{6}"
+                      title="OTP harus 6 digit angka"
+                      placeholder="OTP"
+                    />
+                  </td>
+                  <td className="text-center">
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip id="save-tooltip">Save</Tooltip>}
+                    >
+                      <Button
+                        variant="link"
+                        onClick={() => handleSavePGA()}
+                        disabled={loadingPGA}
+                      >
+                        <MdOutlineSave size={20} />
+                      </Button>
+                    </OverlayTrigger>
+                  </td>
+                </tr>
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    Tidak ada data payment gateway
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card >
       <ModalBank
         onShow={showModal}
         onHide={handleCloseModal}
